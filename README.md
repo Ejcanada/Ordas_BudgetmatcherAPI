@@ -10,25 +10,16 @@ The website connects to the Heritage Travels API to retrieve the available world
 
 The API provides information such as:
 
-Landmark title
-
-Site type
-
-Country and City
-
-Description
-
-Established year
-
-Governing body
-
-Protection status
-
-Annual visitors
-
-Entry fee and local currency
-
-Estimated daily hotel rate
+* Landmark title
+* Site type
+* Country and City
+* Description
+* Established year
+* Governing body
+* Protection status
+* Annual visitors
+* Entry fee and local currency
+* Estimated daily hotel rate
 
 The frontend sends a secure, authenticated request to the API and receives the landmark data in JSON format to calculate matches based on the user's budget.
 
