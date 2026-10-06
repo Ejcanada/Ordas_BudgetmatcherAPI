@@ -6,11 +6,25 @@ const FETCH_OPTIONS = {
     headers: { "x-api-key": API_KEY }
 };
 
+let currentMatches = [];
+
 function resetView() {
     document.getElementById('resultsView').style.display = 'none';
     document.getElementById('searchView').style.display = 'block';
 }
 
+function getImageUrl(icon) {
+    if (!icon || icon.trim() === "") return "";
+    if (icon.startsWith("http")) return icon; 
+    if (icon.includes("images/")) {
+        return icon.startsWith("/") ? icon.substring(1) : icon;
+    } else {
+        const cleanIcon = icon.startsWith("/") ? icon.substring(1) : icon;
+        return `images/${cleanIcon}`;
+    }
+}
+
+// Parses strings like "$45 USD" or "Free" into numerical costs for the math
 function extractCost(feeString) {
     if (!feeString || feeString.toLowerCase() === "free") return 0;
     const match = feeString.match(/\d+(\.\d+)?/);
@@ -18,22 +32,22 @@ function extractCost(feeString) {
 }
 
 async function findMatches() {
-    const budget = parseFloat(document.getElementById("budgetInput").value);
-    const duration = parseInt(document.getElementById("durationInput").value);
-    const btn = document.querySelector('.primary-btn');
+    const budgetInput = document.getElementById("budgetInput").value;
+    const durationInput = document.getElementById("durationInput").value;
     
-    if (!budget || !duration) {
-        alert("Please enter both budget and duration.");
+    if (!budgetInput || !durationInput) {
+        alert("Please enter both your budget and duration.");
         return;
     }
 
+    const budget = parseFloat(budgetInput);
+    const duration = parseInt(durationInput);
+    const btn = document.querySelector('.primary-btn');
     btn.textContent = "Calculating...";
 
     try {
-        // This fetch uses the API_KEY header so it won't get a 401 Error
         const response = await fetch(`${API_URL}/landmarks`, FETCH_OPTIONS);
-        
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        if (!response.ok) throw new Error("API Connection Failed");
         const data = await response.json();
         
         const matches = [];
@@ -44,10 +58,17 @@ async function findMatches() {
             const spare = budget - tripTotal;
             
             if (spare >= 0) {
-                matches.push({ data: landmark, dailyCost, tripTotal, spare });
+                matches.push({
+                    data: landmark,
+                    dailyCost: dailyCost,
+                    tripTotal: tripTotal,
+                    spare: spare
+                });
             }
         });
 
+        currentMatches = matches;
+        
         document.getElementById('matchCount').textContent = matches.length;
         renderCards(matches, duration);
         
@@ -56,7 +77,7 @@ async function findMatches() {
         
     } catch (error) {
         console.error(error);
-        alert("Unable to connect to the API. Make sure it is deployed correctly.");
+        alert("Unable to connect to the API. Make sure the backend is running.");
     } finally {
         btn.textContent = "Find Matches";
     }
@@ -66,18 +87,22 @@ function renderCards(matches, duration) {
     const grid = document.getElementById('cardsGrid');
     grid.innerHTML = "";
 
-    matches.forEach(match => {
+    if (matches.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color: #808080;">No destinations found for this budget. Try adjusting your inputs.</p>`;
+        return;
+    }
+
+    matches.forEach((match, index) => {
         const landmark = match.data;
         const card = document.createElement("div");
         card.className = "match-card";
-        
-        // Formats the spare money with commas (e.g., 4,999)
+
         const formattedSpare = match.spare.toLocaleString();
 
         card.innerHTML = `
             <div style="position: relative;">
                 <span class="tag">${landmark.site_type}</span>
-                <img src="${landmark.icon}" alt="${landmark.title}" class="card-img" onerror="this.src='https://via.placeholder.com/300x180?text=No+Image'">
+                <img src="${getImageUrl(landmark.icon)}" alt="${landmark.title}" class="card-img" onerror="this.src='https://via.placeholder.com/300x180?text=No+Image'">
             </div>
             <div class="card-content">
                 <div class="card-header">
@@ -85,8 +110,9 @@ function renderCards(matches, duration) {
                         <h3>${landmark.title}</h3>
                         <p>${landmark.country}</p>
                     </div>
-                    <div class="icon-btn">✎</div>
+                    <div class="icon-btn" onclick="viewMatch(${index})">✎</div>
                 </div>
+                
                 <div class="stat-row">
                     <span class="label">EST. PER DAY</span>
                     <span class="value green">${match.dailyCost === 0 ? 'Free' : '$' + match.dailyCost}</span>
@@ -96,6 +122,7 @@ function renderCards(matches, duration) {
                     <span class="value">$${match.tripTotal}</span>
                 </div>
             </div>
+            
             <div class="card-footer">
                 $${formattedSpare} to spare
             </div>
