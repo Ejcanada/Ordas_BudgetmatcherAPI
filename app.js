@@ -1,5 +1,5 @@
 // Point this to your live Vercel URL
-const API_URL = "https://ordas-budgetmatcher-api-blond.vercel.app/"; 
+const API_URL = "https://ordas-budgetmatcher-api.vercel.app/"; 
 const API_KEY = "my_secret_landmark_key"; 
 
 const FETCH_OPTIONS = {
