@@ -13,6 +13,7 @@ function resetView() {
     document.getElementById('searchView').style.display = 'block';
 }
 
+// Fixes the image paths to use your local "images" folder
 function getImageUrl(icon) {
     if (!icon || icon.trim() === "") return "";
     if (icon.startsWith("http")) return icon; 
@@ -24,7 +25,6 @@ function getImageUrl(icon) {
     }
 }
 
-// Parses strings like "$45 USD" or "Free" into numerical costs for the math
 function extractCost(feeString) {
     if (!feeString || feeString.toLowerCase() === "free") return 0;
     const match = feeString.match(/\d+(\.\d+)?/);
@@ -46,6 +46,7 @@ async function findMatches() {
     btn.textContent = "Calculating...";
 
     try {
+        // Fetches from your live Vercel API
         const response = await fetch(`${API_URL}/landmarks`, FETCH_OPTIONS);
         if (!response.ok) throw new Error("API Connection Failed");
         const data = await response.json();
@@ -77,7 +78,7 @@ async function findMatches() {
         
     } catch (error) {
         console.error(error);
-        alert("Unable to connect to the API. Make sure the backend is running.");
+        alert("Unable to connect to the API. Check the console for details.");
     } finally {
         btn.textContent = "Find Matches";
     }
@@ -88,7 +89,7 @@ function renderCards(matches, duration) {
     grid.innerHTML = "";
 
     if (matches.length === 0) {
-        grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color: #808080;">No destinations found for this budget. Try adjusting your inputs.</p>`;
+        grid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color: #808080;">No destinations found for this budget.</p>`;
         return;
     }
 
@@ -96,7 +97,6 @@ function renderCards(matches, duration) {
         const landmark = match.data;
         const card = document.createElement("div");
         card.className = "match-card";
-
         const formattedSpare = match.spare.toLocaleString();
 
         card.innerHTML = `
@@ -110,7 +110,7 @@ function renderCards(matches, duration) {
                         <h3>${landmark.title}</h3>
                         <p>${landmark.country}</p>
                     </div>
-                    <div class="icon-btn" onclick="viewMatch(${index})">✎</div>
+                    <div class="icon-btn">✎</div>
                 </div>
                 
                 <div class="stat-row">
